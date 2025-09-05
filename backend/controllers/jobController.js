@@ -1,5 +1,5 @@
 // controllers/jobController.js
-const Job = require('../models/Jobs');
+const Job = require('../models/Job'); 
 const Scan = require('../models/Scan');
 const logger = require('../utils/logger');
 

@@ -6,7 +6,7 @@ const upload = require('../middleware/upload');
 
 const router = express.Router();
 
-router.post('/scan-resume', protect, hrAccess, upload.single('resume'), scanResume);
+router.post('/scan-resume', protect, hrAccess, upload.single('file'), scanResume);
 router.get('/history', protect, getScanHistory);
 
 module.exports = router;
