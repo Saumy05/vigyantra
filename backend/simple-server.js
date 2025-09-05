@@ -3,6 +3,8 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
 
 const app = express();
 const PORT = 3001;
@@ -10,7 +12,8 @@ const PORT = 3001;
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3000',
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -54,48 +57,91 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    message: 'Simple backend is working!'
+    message: 'Simple backend without auth is working!'
   });
 });
 
-// Simple scan endpoint (no authentication required)
+// Scan endpoint (NO AUTHENTICATION REQUIRED)
 app.post('/api/scan-resume', upload.single('file'), async (req, res) => {
   try {
-    console.log('File upload request received');
+    console.log('📄 File upload request received');
     
     if (!req.file) {
-      console.log('No file in request');
+      console.log('❌ No file in request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    console.log('File details:', {
+    console.log('📋 File details:', {
       filename: req.file.originalname,
       size: req.file.size,
       mimetype: req.file.mimetype
     });
 
-    // For now, just return success (we'll add Python service later)
+    // Send file to Python service
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(req.file.path), {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    const pythonServiceUrl = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+    
+    console.log('🐍 Sending file to Python service...');
+    
+    const pythonResponse = await axios.post(
+      `${pythonServiceUrl}/scan-resume/`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+        },
+        timeout: 30000
+      }
+    );
+
+    console.log('✅ Python service responded successfully');
+
+    // Clean up uploaded file
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error('Error deleting temp file:', err);
+    });
+
+    // Return the processed data
     res.json({
       success: true,
-      message: 'File uploaded successfully!',
+      message: 'Resume processed successfully!',
       filename: req.file.originalname,
       size: req.file.size,
-      // Mock scan results for testing
       scanResult: {
-        riskLevel: 'low',
-        vulnerabilities: [],
-        privacyIssues: [
-          { type: 'Email', count: 1 },
-          { type: 'Phone', count: 1 }
-        ]
+        riskLevel: pythonResponse.data.risk_level || 'low',  // Ensure riskLevel exists
+        riskScore: pythonResponse.data.risk_score || 15,
+        vulnerabilities: pythonResponse.data.vulnerabilities || [],
+        privacyIssues: pythonResponse.data.privacy_issues || [],
+        extractedSkills: pythonResponse.data.extracted_skills || [],
+        candidateInfo: pythonResponse.data.candidate_info || {}
       }
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('❌ Processing error:', error.message);
+
+    // Clean up file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting temp file:', err);
+      });
+    }
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        error: 'Python service unavailable',
+        message: 'Please make sure the Python service is running on port 8000'
+      });
+    }
+
     res.status(500).json({ 
-      error: 'Upload failed',
-      message: error.message 
+      error: 'Processing failed',
+      message: error.response?.data?.detail || error.message 
     });
   }
 });
@@ -108,5 +154,6 @@ app.use((error, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`✅ Simple backend server running on http://localhost:${PORT}`);
+  console.log(`🐍 Python service expected at: http://localhost:8000`);
   console.log(`📁 Upload directory: ${uploadsDir}`);
 });
