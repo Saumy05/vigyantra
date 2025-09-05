@@ -50,6 +50,7 @@ const adminOnly = (req, res, next) => {
 /**
  * HR and Admin access
  */
+//this is the middleware to check if the user is an HR or Admin
 const hrAccess = (req, res, next) => {
   if (req.user && (req.user.role === 'hr' || req.user.role === 'admin')) {
     next();
