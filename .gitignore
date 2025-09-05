@@ -1,0 +1,21 @@
+# Node.js dependencies
+node_modules/
+
+# Python virtual environments
+venv/
+python-service/venv/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local

@@ -5,3 +5,24 @@ __pycache__/
 uploads/*
 !uploads/.gitkeep
 .DS_Store
+node_modules/
+.env
+# dependencies
+node_modules/
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+npm-debug.log*
+
+# environment files
+.env
+.env.local
+.env.*.local
+
+# build output
+dist/
+build/
+
+# misc
+.DS_Store
+*.log
