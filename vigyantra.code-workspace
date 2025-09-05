@@ -1,0 +1,22 @@
+{
+  "folders": [
+    { "path": "./frontend" },
+    { "path": "./backend" },
+    { "path": "./python-service" }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "./python-service/venv/bin/python",
+    "terminal.integrated.shell.osx": "/bin/zsh",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}
